@@ -20,7 +20,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 最简单安装方式：
 
-1. 下载 `MacEverything-v0.8.0.dmg`。
+1. 下载 `MacEverything-v0.9.0.dmg`。
 2. 打开 DMG。
 3. 把 `MacEverything.app` 拖到 `Applications`。
 4. 到“应用程序”里打开 MacEverything。
@@ -112,7 +112,7 @@ zsh build-app.sh
 生成 ZIP 和 DMG：
 
 ```bash
-zsh scripts/package-release.sh 0.8.0
+zsh scripts/package-release.sh 0.9.0
 ```
 
 ## Apple 公证

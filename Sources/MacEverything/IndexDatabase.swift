@@ -62,6 +62,32 @@ enum IndexDatabase {
         }
     }
 
+    static func applyChanges(upserts: [FileEntry], removals: [String]) throws {
+        guard !upserts.isEmpty || !removals.isEmpty else { return }
+        try FileManager.default.createDirectory(at: IndexStore.directoryURL, withIntermediateDirectories: true)
+        let db = try open(readOnly: false)
+        defer { sqlite3_close(db) }
+
+        try execute(db, "PRAGMA journal_mode=WAL")
+        try execute(db, "PRAGMA synchronous=NORMAL")
+        try createSchema(db: db)
+        try execute(db, "BEGIN IMMEDIATE TRANSACTION")
+        do {
+            for path in removals {
+                try deletePathAndChildren(path, db: db)
+            }
+            for entry in upserts {
+                try deletePathAndChildren(entry.path, db: db)
+            }
+            try insert(entries: upserts, db: db)
+            try writeMetadata(db: db, key: "updatedAt", value: String(Date().timeIntervalSince1970))
+            try execute(db, "COMMIT")
+        } catch {
+            try? execute(db, "ROLLBACK")
+            throw error
+        }
+    }
+
     static func candidatePaths(for rawQuery: String, limit: Int = 5_000) -> [String]? {
         guard let matchQuery = makeFTSQuery(from: rawQuery) else { return nil }
         guard FileManager.default.fileExists(atPath: fileURL.path) else { return nil }
@@ -186,6 +212,25 @@ enum IndexDatabase {
         }
 
         return entries
+    }
+
+    private static func deletePathAndChildren(_ path: String, db: OpaquePointer?) throws {
+        let prefix = path + "/"
+        try deleteFromTable("entries", path: path, prefix: prefix, db: db)
+        try? deleteFromTable("entries_fts", path: path, prefix: prefix, db: db)
+    }
+
+    private static func deleteFromTable(_ table: String, path: String, prefix: String, db: OpaquePointer?) throws {
+        let sql = "DELETE FROM \(table) WHERE path = ? OR substr(path, 1, ?) = ?"
+        var statement: OpaquePointer?
+        try prepare(db, sql, statement: &statement)
+        defer { sqlite3_finalize(statement) }
+        bindText(statement, 1, path)
+        sqlite3_bind_int(statement, 2, Int32(prefix.count))
+        bindText(statement, 3, prefix)
+        guard sqlite3_step(statement) == SQLITE_DONE else {
+            throw sqliteError(db)
+        }
     }
 
     private static func insert(entries: [FileEntry], db: OpaquePointer?) throws {

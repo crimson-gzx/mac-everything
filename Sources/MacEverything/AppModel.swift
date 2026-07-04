@@ -316,16 +316,21 @@ final class AppModel: ObservableObject {
         }.value
 
         var changed = false
+        var databaseUpserts: [FileEntry] = []
+        var databaseRemovals: [String] = []
+
         for (path, entry) in updates {
             if let entry {
                 if entryMap[path] != entry {
                     entryMap[path] = entry
+                    databaseUpserts.append(entry)
                     changed = true
                 }
             } else if entryMap[path] != nil || entryMap.keys.contains(where: { $0.hasPrefix(path + "/") }) {
                 entryMap = entryMap.filter { key, _ in
                     key != path && !key.hasPrefix(path + "/")
                 }
+                databaseRemovals.append(path)
                 changed = true
             }
         }
@@ -334,7 +339,19 @@ final class AppModel: ObservableObject {
         rebuildSearchRecords()
         updateStatus()
         scheduleSearch(immediate: true)
-        scheduleSave()
+
+        let wroteIncrementally = await Task.detached(priority: .utility) {
+            do {
+                try IndexDatabase.applyChanges(upserts: databaseUpserts, removals: databaseRemovals)
+                return true
+            } catch {
+                return false
+            }
+        }.value
+
+        if !wroteIncrementally {
+            scheduleSave()
+        }
     }
 
     private func chooseFolder(title: String) -> URL? {
