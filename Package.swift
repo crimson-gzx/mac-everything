@@ -15,7 +15,8 @@ let package = Package(
                 .linkedFramework("AppKit"),
                 .linkedFramework("CoreServices"),
                 .linkedFramework("QuickLookUI"),
-                .linkedFramework("Carbon")
+                .linkedFramework("Carbon"),
+                .linkedLibrary("sqlite3")
             ]
         )
     ]

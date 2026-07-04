@@ -20,28 +20,31 @@ enum IndexStore {
         directoryURL.appendingPathComponent("file-index.plist")
     }
 
+    static var databaseURL: URL {
+        IndexDatabase.fileURL
+    }
+
     static func load() throws -> StoredIndex {
+        do {
+            return try IndexDatabase.load()
+        } catch {
+            let legacy = try loadLegacyPlist()
+            try? IndexDatabase.save(entries: legacy.entries, roots: legacy.roots.map { URL(fileURLWithPath: $0) }, excludedPaths: legacy.excludedPaths)
+            return legacy
+        }
+    }
+
+    static func save(entries: [FileEntry], roots: [URL], excludedPaths: [String]) throws {
+        try IndexDatabase.save(entries: entries, roots: roots, excludedPaths: excludedPaths)
+    }
+
+    private static func loadLegacyPlist() throws -> StoredIndex {
         let data = try Data(contentsOf: fileURL)
         let index = try PropertyListDecoder().decode(StoredIndex.self, from: data)
         guard index.version == StoredIndex.currentVersion else {
             throw CocoaError(.fileReadCorruptFile)
         }
         return index
-    }
-
-    static func save(entries: [FileEntry], roots: [URL], excludedPaths: [String]) throws {
-        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
-        let payload = StoredIndex(
-            version: StoredIndex.currentVersion,
-            createdAt: Date(),
-            roots: roots.map(\.path),
-            excludedPaths: AppSettings.normalized(paths: excludedPaths),
-            entries: entries
-        )
-        let encoder = PropertyListEncoder()
-        encoder.outputFormat = .binary
-        let data = try encoder.encode(payload)
-        try data.write(to: fileURL, options: .atomic)
     }
 }
 

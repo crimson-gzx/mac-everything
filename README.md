@@ -20,7 +20,7 @@ Download the latest build from GitHub Releases:
 https://github.com/crimson-gzx/mac-everything/releases
 ```
 
-Recommended: download `MacEverything-v0.6.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
+Recommended: download `MacEverything-v0.7.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
@@ -36,6 +36,7 @@ If macOS blocks the app because it was downloaded from the internet, right-click
 - Result display options: show/hide path, modified date, size, and kind
 - Performance: precomputed search records avoid repeatedly lowercasing every file name/path while typing
 - Performance: file icon cache reduces repeated system icon lookups during scrolling
+- SQLite index backend: prefer `file-index.sqlite`, with automatic migration from the legacy `file-index.plist`
 - Native SwiftUI macOS interface
 - Menu bar app
 - Global shortcut with fallback registration, preferring `⌘⇧F`
@@ -86,7 +87,7 @@ zsh build-app.sh
 Build ZIP and DMG release artifacts:
 
 ```bash
-zsh scripts/package-release.sh 0.6.0
+zsh scripts/package-release.sh 0.7.0
 ```
 
 ## Notarization
@@ -110,7 +111,7 @@ Without Full Disk Access, macOS may block some protected locations such as Deskt
 The local index is saved at:
 
 ```text
-~/Library/Application Support/MacEverything/file-index.plist
+~/Library/Application Support/MacEverything/file-index.sqlite
 ```
 
 ## Mac App Store note
