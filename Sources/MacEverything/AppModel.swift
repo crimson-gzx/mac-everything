@@ -18,8 +18,11 @@ final class AppModel: ObservableObject {
     @Published var sortOption: SearchSort = .relevance {
         didSet { scheduleSearch(immediate: true) }
     }
+    @Published private(set) var settings = AppSettings.defaultValue
 
-    let roots: [URL] = [FileManager.default.homeDirectoryForCurrentUser]
+    var roots: [URL] { settings.rootURLs }
+    var rootPaths: [String] { settings.rootPaths }
+    var excludedPaths: [String] { settings.excludedPaths }
 
     private var entryMap: [String: FileEntry] = [:]
     private var watcher: FileSystemWatcher?
@@ -36,7 +39,9 @@ final class AppModel: ObservableObject {
         return results.first(where: { $0.id == selection })
     }
 
-    private init() {}
+    private init() {
+        settings = SettingsStore.load()
+    }
 
     func start() {
         guard !hasStarted else { return }
@@ -56,9 +61,10 @@ final class AppModel: ObservableObject {
             isIndexing = true
             statusText = "正在建立索引…"
             let scanRoots = roots
+            let scanExcludedPaths = excludedPaths
 
             let entries = await Task.detached(priority: .userInitiated) {
-                FileIndexer.scan(roots: scanRoots)
+                FileIndexer.scan(roots: scanRoots, excludedPaths: scanExcludedPaths)
             }.value
 
             guard !Task.isCancelled else {
@@ -110,12 +116,58 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func addIndexFolder() {
+        guard let url = chooseFolder(title: "选择要索引的文件夹") else { return }
+        var next = settings
+        next.rootPaths.append(url.path)
+        applySettings(next, shouldRebuild: true)
+    }
+
+    func removeIndexRoot(_ path: String) {
+        var next = settings
+        next.rootPaths.removeAll { $0 == path }
+        if next.rootPaths.isEmpty {
+            next.rootPaths = AppSettings.defaultValue.rootPaths
+        }
+        applySettings(next, shouldRebuild: true)
+    }
+
+    func resetIndexRoots() {
+        var next = settings
+        next.rootPaths = AppSettings.defaultValue.rootPaths
+        applySettings(next, shouldRebuild: true)
+    }
+
+    func addExcludedFolder() {
+        guard let url = chooseFolder(title: "选择要排除的文件夹") else { return }
+        var next = settings
+        next.excludedPaths.append(url.path)
+        applySettings(next, shouldRebuild: true)
+    }
+
+    func removeExcludedPath(_ path: String) {
+        var next = settings
+        next.excludedPaths.removeAll { $0 == path }
+        applySettings(next, shouldRebuild: true)
+    }
+
+    func clearExcludedFolders() {
+        var next = settings
+        next.excludedPaths.removeAll()
+        applySettings(next, shouldRebuild: true)
+    }
+
     private func loadExistingIndexOrBuild() async {
         statusText = "正在读取索引…"
         do {
             let stored = try await Task.detached(priority: .userInitiated) {
                 try IndexStore.load()
             }.value
+
+            if stored.roots != roots.map(\.path) || stored.excludedPaths != excludedPaths {
+                rebuildIndex()
+                return
+            }
 
             entryMap = Dictionary(uniqueKeysWithValues: stored.entries.map { ($0.path, $0) })
             lastIndexedAt = stored.createdAt
@@ -140,8 +192,15 @@ final class AppModel: ObservableObject {
         watcher?.start()
     }
 
+    private func restartWatcher() {
+        watcher?.stop()
+        watcher = nil
+        startWatcher()
+    }
+
     private func receive(_ change: FileSystemChange) {
-        let filtered = change.paths.filter { !FileIndexer.isIgnored(path: $0) }
+        let currentExcludedPaths = excludedPaths
+        let filtered = change.paths.filter { !FileIndexer.isIgnored(path: $0, excludedPaths: currentExcludedPaths) }
         guard !filtered.isEmpty || change.requiresFullRescan else { return }
 
         pendingPaths.formUnion(filtered)
@@ -165,9 +224,10 @@ final class AppModel: ObservableObject {
             return
         }
 
+        let currentExcludedPaths = excludedPaths
         let updates = await Task.detached(priority: .utility) {
             paths.map { path in
-                (path, FileIndexer.entry(at: URL(fileURLWithPath: path)))
+                (path, FileIndexer.entry(at: URL(fileURLWithPath: path), excludedPaths: currentExcludedPaths))
             }
         }.value
 
@@ -190,6 +250,41 @@ final class AppModel: ObservableObject {
         updateStatus()
         scheduleSearch(immediate: true)
         scheduleSave()
+    }
+
+    private func chooseFolder(title: String) -> URL? {
+        let panel = NSOpenPanel()
+        panel.title = title
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    private func applySettings(_ nextSettings: AppSettings, shouldRebuild: Bool) {
+        var normalized = nextSettings
+        normalized.normalize()
+        if normalized.rootPaths.isEmpty {
+            normalized.rootPaths = AppSettings.defaultValue.rootPaths
+        }
+        guard normalized != settings else { return }
+
+        settings = normalized
+        try? SettingsStore.save(normalized)
+        pendingPaths.removeAll(keepingCapacity: true)
+        pendingFullRescan = false
+        restartWatcher()
+        statusText = "索引设置已更新"
+
+        if shouldRebuild {
+            entryMap.removeAll(keepingCapacity: true)
+            results.removeAll()
+            selection = nil
+            rebuildIndex()
+        } else {
+            scheduleSearch(immediate: true)
+        }
     }
 
     private func scheduleSearch(immediate: Bool = false) {
@@ -221,6 +316,7 @@ final class AppModel: ObservableObject {
         saveTask?.cancel()
         let entries = Array(entryMap.values)
         let saveRoots = roots
+        let saveExcludedPaths = excludedPaths
 
         saveTask = Task {
             if !immediate {
@@ -228,7 +324,7 @@ final class AppModel: ObservableObject {
             }
             guard !Task.isCancelled else { return }
             await Task.detached(priority: .utility) {
-                try? IndexStore.save(entries: entries, roots: saveRoots)
+                try? IndexStore.save(entries: entries, roots: saveRoots, excludedPaths: saveExcludedPaths)
             }.value
         }
     }

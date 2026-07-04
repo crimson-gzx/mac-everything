@@ -20,13 +20,16 @@ Download the latest build from GitHub Releases:
 https://github.com/crimson-gzx/mac-everything/releases
 ```
 
-Recommended: download `MacEverything-v0.2.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
+Recommended: download `MacEverything-v0.3.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
 ## Features
 
 - Fast file and folder search from an in-memory index
+- Visual index root management: add, remove, reset to the default Home folder
+- Visual excluded-folder management: add, remove, clear exclusions
+- Settings are saved at `~/Library/Application Support/MacEverything/settings.plist`
 - Native SwiftUI macOS interface
 - Menu bar app
 - Global shortcut with fallback registration, preferring `⌘⇧F`
@@ -77,7 +80,7 @@ zsh build-app.sh
 Build ZIP and DMG release artifacts:
 
 ```bash
-zsh scripts/package-release.sh 0.2.0
+zsh scripts/package-release.sh 0.3.0
 ```
 
 ## Notarization

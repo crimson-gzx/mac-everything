@@ -1,11 +1,12 @@
 import Foundation
 
 struct StoredIndex: Codable, Sendable {
-    static let currentVersion = 1
+    static let currentVersion = 2
 
     let version: Int
     let createdAt: Date
     let roots: [String]
+    let excludedPaths: [String]
     let entries: [FileEntry]
 }
 
@@ -28,12 +29,13 @@ enum IndexStore {
         return index
     }
 
-    static func save(entries: [FileEntry], roots: [URL]) throws {
+    static func save(entries: [FileEntry], roots: [URL], excludedPaths: [String]) throws {
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let payload = StoredIndex(
             version: StoredIndex.currentVersion,
             createdAt: Date(),
             roots: roots.map(\.path),
+            excludedPaths: AppSettings.normalized(paths: excludedPaths),
             entries: entries
         )
         let encoder = PropertyListEncoder()
@@ -55,14 +57,17 @@ enum FileIndexer {
 
     static func scan(
         roots: [URL],
+        excludedPaths: [String] = [],
         progress: @escaping @Sendable (Int) -> Void = { _ in }
     ) -> [FileEntry] {
         let fileManager = FileManager.default
+        let normalizedExcludedPaths = AppSettings.normalized(paths: excludedPaths)
         var entries: [FileEntry] = []
         entries.reserveCapacity(100_000)
 
         for root in roots {
             guard fileManager.fileExists(atPath: root.path) else { continue }
+            guard !isIgnored(path: root.path, excludedPaths: normalizedExcludedPaths) else { continue }
 
             let rootValues = try? root.resourceValues(forKeys: Set(resourceKeys))
             entries.append(makeEntry(url: root, values: rootValues))
@@ -77,7 +82,7 @@ enum FileIndexer {
             for case let url as URL in enumerator {
                 autoreleasepool {
                     let values = try? url.resourceValues(forKeys: Set(resourceKeys))
-                    if shouldSkip(url: url, values: values) {
+                    if shouldSkip(url: url, values: values, excludedPaths: normalizedExcludedPaths) {
                         if values?.isDirectory == true {
                             enumerator.skipDescendants()
                         }
@@ -99,24 +104,30 @@ enum FileIndexer {
         return entries
     }
 
-    static func isIgnored(path: String) -> Bool {
-        if path.contains("/Library/Caches/") || path.hasSuffix("/Library/Caches") { return true }
-        if path.contains("/.Trash/") || path.hasSuffix("/.Trash") { return true }
-        if path.hasPrefix(IndexStore.directoryURL.path) { return true }
+    static func isIgnored(path: String, excludedPaths: [String] = []) -> Bool {
+        let normalizedPath = (path as NSString).standardizingPath
+        if normalizedPath.contains("/Library/Caches/") || normalizedPath.hasSuffix("/Library/Caches") { return true }
+        if normalizedPath.contains("/.Trash/") || normalizedPath.hasSuffix("/.Trash") { return true }
+        if normalizedPath.hasPrefix(IndexStore.directoryURL.path) { return true }
+        for excludedPath in AppSettings.normalized(paths: excludedPaths) {
+            if normalizedPath == excludedPath || normalizedPath.hasPrefix(excludedPath + "/") {
+                return true
+            }
+        }
         return false
     }
 
-    static func entry(at url: URL) -> FileEntry? {
+    static func entry(at url: URL, excludedPaths: [String] = []) -> FileEntry? {
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         let values = try? url.resourceValues(forKeys: Set(resourceKeys))
-        guard !shouldSkip(url: url, values: values) else { return nil }
+        guard !shouldSkip(url: url, values: values, excludedPaths: excludedPaths) else { return nil }
         return makeEntry(url: url, values: values)
     }
 
-    private static func shouldSkip(url: URL, values: URLResourceValues?) -> Bool {
+    private static func shouldSkip(url: URL, values: URLResourceValues?, excludedPaths: [String]) -> Bool {
         if values?.isSymbolicLink == true { return true }
         if values?.isPackage == true { return true }
-        return isIgnored(path: url.path)
+        return isIgnored(path: url.path, excludedPaths: excludedPaths)
     }
 
     private static func makeEntry(url: URL, values: URLResourceValues?) -> FileEntry {

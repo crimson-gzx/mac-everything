@@ -4,6 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var model: AppModel
     @FocusState private var searchFocused: Bool
+    @State private var showingIndexSettings = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,6 +22,9 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .focusMacEverythingSearch)) { _ in
             searchFocused = true
+        }
+        .sheet(isPresented: $showingIndexSettings) {
+            IndexSettingsView(model: model)
         }
     }
 
@@ -53,6 +57,7 @@ struct ContentView: View {
             }
 
             Menu {
+                Button("索引目录设置…") { showingIndexSettings = true }
                 Button("重建索引") { model.rebuildIndex() }
                 Button("打开完全磁盘访问设置") { model.openFullDiskAccessSettings() }
                 Divider()
@@ -63,6 +68,7 @@ struct ContentView: View {
                 }
                 Divider()
                 Text("快捷键：\(model.hotKeyDisplay)")
+                Text("索引目录：\(model.rootPaths.count)  排除：\(model.excludedPaths.count)")
                 Text("语法：*.pdf  !temp  name:  path:  size:>10mb  date:today")
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -120,6 +126,10 @@ struct ContentView: View {
     private var statusBar: some View {
         HStack(spacing: 12) {
             Text(model.statusText)
+            Text("索引 \(model.rootPaths.count) 个目录")
+            if !model.excludedPaths.isEmpty {
+                Text("排除 \(model.excludedPaths.count) 个")
+            }
             if !model.query.isEmpty {
                 Text("找到 \(model.results.count) 条")
                 Text("排序：\(model.sortOption.label)")

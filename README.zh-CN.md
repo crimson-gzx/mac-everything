@@ -20,7 +20,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 最简单安装方式：
 
-1. 下载 `MacEverything-v0.2.0.dmg`。
+1. 下载 `MacEverything-v0.3.0.dmg`。
 2. 打开 DMG。
 3. 把 `MacEverything.app` 拖到 `Applications`。
 4. 到“应用程序”里打开 MacEverything。
@@ -38,6 +38,9 @@ https://github.com/crimson-gzx/mac-everything/releases
 ## 功能
 
 - 文件和文件夹极速搜索
+- 可视化管理索引目录：添加、移除、恢复默认 Home
+- 可视化管理排除目录：添加、移除、清空排除
+- 设置会保存到 `~/Library/Application Support/MacEverything/settings.plist`
 - SwiftUI 原生 macOS 界面
 - 菜单栏常驻
 - 全局快捷键呼出，默认优先尝试 `⌘⇧F`
@@ -101,7 +104,7 @@ zsh build-app.sh
 生成 ZIP 和 DMG：
 
 ```bash
-zsh scripts/package-release.sh 0.2.0
+zsh scripts/package-release.sh 0.3.0
 ```
 
 ## Apple 公证
