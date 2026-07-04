@@ -1,6 +1,6 @@
 # MacEverything
 
-[中文说明](README.zh-CN.md) · English
+[中文说明](README.zh-CN.md) · [中文安装说明](INSTALL.zh-CN.md) · English
 
 <p align="center">
   <img src="assets/preview.svg" alt="MacEverything preview" width="900">
@@ -20,7 +20,7 @@ Download the latest build from GitHub Releases:
 https://github.com/crimson-gzx/mac-everything/releases
 ```
 
-For the first prototype, download `MacEverything-v0.1.0.zip`, unzip it, and move `MacEverything.app` to `/Applications`.
+Recommended: download `MacEverything-v0.1.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
@@ -65,10 +65,10 @@ Build a local `.app` bundle:
 zsh build-app.sh
 ```
 
-Install it into `/Applications` and create a desktop shortcut:
+Build ZIP and DMG release artifacts:
 
 ```bash
-zsh install-shortcut.sh
+zsh scripts/package-release.sh 0.1.0
 ```
 
 The generated app will be available at:
@@ -121,7 +121,7 @@ Daily search should feel instant after the first index build, but the initial sc
 - Folder selection UI
 - Better keyboard shortcut preferences
 - Search result preview
-- DMG packaging and notarization
+- DMG notarization
 - Real `.icns` app icon
 - App Store-friendly sandbox mode
 - Better ranking and fuzzy matching

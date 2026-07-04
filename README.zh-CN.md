@@ -10,6 +10,24 @@ MacEverything 的思路是：先建立一次本地索引，然后从内存里即
 
 > 当前还是早期原型，更适合 GitHub Release / 自行分发使用。它还不是 Mac App Store 沙盒版。
 
+## 下载安装
+
+推荐下载 DMG 版：
+
+```text
+https://github.com/crimson-gzx/mac-everything/releases
+```
+
+最简单安装方式：
+
+1. 下载 `MacEverything-v0.1.0.dmg`。
+2. 打开 DMG。
+3. 把 `MacEverything.app` 拖到 `Applications`。
+4. 到“应用程序”里打开 MacEverything。
+5. 如果 macOS 拦截：右键 App → 打开。
+
+更详细的安装说明见：[INSTALL.zh-CN.md](INSTALL.zh-CN.md)。
+
 ## 适合谁
 
 - 从 Windows 切到 Mac，想找一个类似 Everything 的工具
@@ -33,21 +51,6 @@ MacEverything 的思路是：先建立一次本地索引，然后从内存里即
   - `ext:jpg,png`：多个扩展名
   - `type:file`：只看文件
   - `type:folder`：只看文件夹
-
-## 下载安装
-
-到 GitHub Releases 下载最新版：
-
-```text
-https://github.com/crimson-gzx/mac-everything/releases
-```
-
-下载 `MacEverything-v0.1.0.zip` 后：
-
-1. 解压 ZIP。
-2. 把 `MacEverything.app` 拖进“应用程序”。
-3. 第一次打开如果提示来自互联网，右键 App → 打开。
-4. 建议开启完全磁盘访问权限。
 
 ## 权限设置
 
@@ -86,10 +89,10 @@ swift build -c release
 zsh build-app.sh
 ```
 
-安装到应用程序并创建桌面快捷方式：
+生成 ZIP 和 DMG：
 
 ```bash
-zsh install-shortcut.sh
+zsh scripts/package-release.sh 0.1.0
 ```
 
 ## 索引文件位置
@@ -116,7 +119,7 @@ macOS/APFS 没有完全等价、公开给第三方应用的接口，所以 MacEv
 - 文件夹选择界面
 - 快捷键偏好设置
 - 结果预览
-- DMG 打包和公证
+- DMG 公证
 - 真正的 `.icns` 应用图标
 - 更适合 Mac App Store 的沙盒版本
 - 更好的模糊搜索和排序
