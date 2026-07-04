@@ -14,6 +14,11 @@ final class AppModel: ObservableObject {
     @Published private(set) var isIndexing = false
     @Published private(set) var statusText = "准备中…"
     @Published private(set) var lastIndexedAt: Date?
+    @Published private(set) var indexedItemCount = 0
+    @Published private(set) var lastIndexDurationMS: Double?
+    @Published private(set) var lastSearchDurationMS: Double?
+    @Published private(set) var lastSearchCandidateCount: Int?
+    @Published private(set) var lastSearchUsedFTS = false
     @Published var hotKeyDisplay = "⌘⇧F"
     @Published var sortOption: SearchSort = .relevance {
         didSet { scheduleSearch(immediate: true) }
@@ -63,9 +68,12 @@ final class AppModel: ObservableObject {
         reindexTask = Task { [weak self] in
             guard let self else { return }
             isIndexing = true
+            indexedItemCount = 0
+            lastIndexDurationMS = nil
             statusText = "正在建立索引…"
             let scanRoots = roots
             let scanExcludedPaths = excludedPaths
+            let indexStart = Date()
 
             let entries = await Task.detached(priority: .userInitiated) {
                 FileIndexer.scan(roots: scanRoots, excludedPaths: scanExcludedPaths)
@@ -79,7 +87,9 @@ final class AppModel: ObservableObject {
 
             entryMap = Dictionary(uniqueKeysWithValues: entries.map { ($0.path, $0) })
             rebuildSearchRecords()
+            indexedItemCount = entries.count
             lastIndexedAt = Date()
+            lastIndexDurationMS = Date().timeIntervalSince(indexStart) * 1_000
             isIndexing = false
             updateStatus()
             scheduleSearch(immediate: true)
@@ -254,6 +264,7 @@ final class AppModel: ObservableObject {
 
             entryMap = Dictionary(uniqueKeysWithValues: stored.entries.map { ($0.path, $0) })
             rebuildSearchRecords()
+            indexedItemCount = stored.entries.count
             lastIndexedAt = stored.createdAt
             updateStatus()
             scheduleSearch(immediate: true)
@@ -337,6 +348,7 @@ final class AppModel: ObservableObject {
 
         guard changed else { return }
         rebuildSearchRecords()
+        indexedItemCount = entryMap.count
         updateStatus()
         scheduleSearch(immediate: true)
 
@@ -440,7 +452,8 @@ final class AppModel: ObservableObject {
             guard !Task.isCancelled, let self else { return }
 
             let currentSort = sortOption
-            let found = await Task.detached(priority: .userInitiated) {
+            let searchStart = Date()
+            let searchResult = await Task.detached(priority: .userInitiated) {
                 let candidatePaths = IndexDatabase.candidatePaths(for: currentQuery)
                 let candidateRecords: [SearchRecord]
                 if let candidatePaths {
@@ -449,10 +462,15 @@ final class AppModel: ObservableObject {
                 } else {
                     candidateRecords = records
                 }
-                return SearchEngine.search(currentQuery, in: candidateRecords, sort: currentSort)
+                let found = SearchEngine.search(currentQuery, in: candidateRecords, sort: currentSort)
+                return (found, candidatePaths?.count, candidatePaths != nil)
             }.value
 
             guard !Task.isCancelled else { return }
+            lastSearchDurationMS = Date().timeIntervalSince(searchStart) * 1_000
+            lastSearchCandidateCount = searchResult.1
+            lastSearchUsedFTS = searchResult.2
+            let found = searchResult.0
             results = found
             if let selection, found.contains(where: { $0.id == selection }) {
                 return

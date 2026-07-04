@@ -1,6 +1,6 @@
 # MacEverything 安装说明
 
-推荐下载 DMG 版：`MacEverything-v0.9.0.dmg`。
+推荐下载 DMG 版：`MacEverything-v0.10.0.dmg`。
 
 ## 最简单安装方式
 

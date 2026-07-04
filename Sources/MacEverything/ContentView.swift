@@ -132,6 +132,7 @@ struct ContentView: View {
                 Divider()
                 Text("快捷键：\(model.hotKeyDisplay)")
                 Text("索引目录：\(model.rootPaths.count)  排除：\(model.excludedPaths.count)")
+                Text("性能：\(performanceSummary)")
                 Text("语法：*.pdf  !temp  name:  path:  size:>10mb  date:today")
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -190,9 +191,32 @@ struct ContentView: View {
         }
     }
 
+    private var performanceSummary: String {
+        var parts: [String] = []
+        if let searchMS = model.lastSearchDurationMS {
+            parts.append("搜索 \(formatDuration(searchMS))")
+        }
+        parts.append(model.lastSearchUsedFTS ? "FTS" : "内存")
+        if let candidateCount = model.lastSearchCandidateCount {
+            parts.append("候选 \(candidateCount.formatted())")
+        }
+        if let indexMS = model.lastIndexDurationMS {
+            parts.append("索引 \(formatDuration(indexMS))")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func formatDuration(_ milliseconds: Double) -> String {
+        if milliseconds >= 1_000 {
+            return String(format: "%.1fs", milliseconds / 1_000)
+        }
+        return String(format: "%.0fms", milliseconds)
+    }
+
     private var statusBar: some View {
         HStack(spacing: 12) {
             Text(model.statusText)
+            Text("项目 \(model.indexedItemCount.formatted())")
             Text("索引 \(model.rootPaths.count) 个目录")
             if !model.excludedPaths.isEmpty {
                 Text("排除 \(model.excludedPaths.count) 个")
@@ -200,6 +224,7 @@ struct ContentView: View {
             if !model.query.isEmpty {
                 Text("找到 \(model.results.count) 条")
                 Text("排序：\(model.sortOption.label)")
+                Text(performanceSummary)
             }
             if !model.savedFilters.isEmpty {
                 Text("过滤器 \(model.savedFilters.count) 个")
