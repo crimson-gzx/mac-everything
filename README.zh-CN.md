@@ -26,7 +26,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 4. 到“应用程序”里打开 MacEverything。
 5. 如果 macOS 拦截：右键 App → 打开。
 
-更详细的安装说明见：[INSTALL.zh-CN.md](INSTALL.zh-CN.md)。
+更详细的安装说明见：[INSTALL.zh-CN.md](INSTALL.zh-CN.md)。英文安装说明见：[INSTALL.md](INSTALL.md)。
 
 ## 适合谁
 
@@ -94,6 +94,10 @@ zsh build-app.sh
 ```bash
 zsh scripts/package-release.sh 0.1.0
 ```
+
+## Apple 公证
+
+见 [NOTARIZATION.md](NOTARIZATION.md)。
 
 ## 索引文件位置
 

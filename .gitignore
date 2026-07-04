@@ -17,6 +17,13 @@ dist/
 *.app
 *.dmg
 
+# Credentials / secrets
+AuthKey_*.p8
+*.p8
+*.certSigningRequest
+*.cer
+*.p12
+
 # Local index/runtime files
 *.log
 

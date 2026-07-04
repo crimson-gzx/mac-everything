@@ -13,7 +13,15 @@ ZIP_PATH="$DIST_DIR/MacEverything-v$VERSION.zip"
 DMG_PATH="$DIST_DIR/MacEverything-v$VERSION.dmg"
 
 cd "$ROOT_DIR"
-zsh build-app.sh
+if [[ "${SKIP_BUILD:-0}" != "1" ]]; then
+  zsh build-app.sh
+fi
+
+if [[ ! -d "$APP_PATH" ]]; then
+  echo "Missing app bundle: $APP_PATH"
+  echo "Run zsh build-app.sh first."
+  exit 1
+fi
 
 rm -rf "$RELEASE_DIR" "$DMG_DIR" "$ZIP_PATH" "$DMG_PATH"
 mkdir -p "$RELEASE_DIR" "$DMG_DIR"
@@ -30,6 +38,19 @@ MacEverything 安装说明
 项目地址：https://github.com/crimson-gzx/mac-everything
 TXT
 
+cat > "$RELEASE_DIR/INSTALL.txt" <<'TXT'
+MacEverything Installation
+
+1. Drag MacEverything.app to Applications.
+2. Open MacEverything from Applications.
+3. If macOS blocks it: right-click MacEverything.app, then choose Open.
+4. Recommended: grant Full Disk Access in System Settings → Privacy & Security.
+5. After granting permission, open the app menu and click Rebuild Index.
+
+Shortcut: MacEverything first tries ⌘⇧F.
+Project: https://github.com/crimson-gzx/mac-everything
+TXT
+
 cat > "$DMG_DIR/README-先看我.txt" <<'TXT'
 安装方法：
 
@@ -39,6 +60,17 @@ cat > "$DMG_DIR/README-先看我.txt" <<'TXT'
 4. 建议开启：系统设置 → 隐私与安全性 → 完全磁盘访问权限。
 
 快捷键：默认优先尝试 ⌘⇧F。
+TXT
+
+cat > "$DMG_DIR/README.txt" <<'TXT'
+Installation:
+
+1. Drag MacEverything.app to Applications.
+2. Open MacEverything from Applications.
+3. If macOS blocks it: right-click MacEverything.app, then choose Open.
+4. Recommended: grant Full Disk Access in System Settings → Privacy & Security.
+
+Shortcut: MacEverything first tries ⌘⇧F.
 TXT
 
 ditto "$APP_PATH" "$RELEASE_DIR/$APP_NAME.app"

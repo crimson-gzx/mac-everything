@@ -1,6 +1,6 @@
 # MacEverything
 
-[中文说明](README.zh-CN.md) · [中文安装说明](INSTALL.zh-CN.md) · English
+[中文说明](README.zh-CN.md) · [中文安装说明](INSTALL.zh-CN.md) · [Installation](INSTALL.md) · English
 
 <p align="center">
   <img src="assets/preview.svg" alt="MacEverything preview" width="900">
@@ -71,11 +71,9 @@ Build ZIP and DMG release artifacts:
 zsh scripts/package-release.sh 0.1.0
 ```
 
-The generated app will be available at:
+## Notarization
 
-```text
-/Applications/MacEverything.app
-```
+See [NOTARIZATION.md](NOTARIZATION.md).
 
 ## Permissions
 

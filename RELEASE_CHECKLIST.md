@@ -12,11 +12,11 @@ Before publishing a public release:
   /tmp/MacEverythingSearchSelfTest
   ```
 
-- Build the app bundle:
+- Build ZIP and DMG artifacts:
 
   ```bash
-  zsh build-app.sh
+  zsh scripts/package-release.sh 0.1.0
   ```
 
-- Consider notarizing a DMG for non-App-Store distribution.
-- Create a GitHub release with the built artifact.
+- For public distribution, sign and submit the DMG to Apple using `scripts/notarize-release.sh`.
+- Create or update the GitHub release with the built artifacts.
