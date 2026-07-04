@@ -20,7 +20,7 @@ Download the latest build from GitHub Releases:
 https://github.com/crimson-gzx/mac-everything/releases
 ```
 
-Recommended: download `MacEverything-v0.5.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
+Recommended: download `MacEverything-v0.6.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
@@ -34,6 +34,8 @@ If macOS blocks the app because it was downloaded from the internet, right-click
 - Saved filters/bookmarks: built-in PDF, images, videos, modified today, large files; custom filters can be saved from the current query
 - Quick Look preview from the menu, context menu, `⌘Y`, or Space when the result list is focused
 - Result display options: show/hide path, modified date, size, and kind
+- Performance: precomputed search records avoid repeatedly lowercasing every file name/path while typing
+- Performance: file icon cache reduces repeated system icon lookups during scrolling
 - Native SwiftUI macOS interface
 - Menu bar app
 - Global shortcut with fallback registration, preferring `⌘⇧F`
@@ -84,7 +86,7 @@ zsh build-app.sh
 Build ZIP and DMG release artifacts:
 
 ```bash
-zsh scripts/package-release.sh 0.5.0
+zsh scripts/package-release.sh 0.6.0
 ```
 
 ## Notarization

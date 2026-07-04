@@ -28,6 +28,7 @@ final class AppModel: ObservableObject {
     var displayOptions: ResultDisplayOptions { settings.displayOptions }
 
     private var entryMap: [String: FileEntry] = [:]
+    private var searchRecords: [SearchRecord] = []
     private var watcher: FileSystemWatcher?
     private var searchTask: Task<Void, Never>?
     private var reindexTask: Task<Void, Never>?
@@ -77,6 +78,7 @@ final class AppModel: ObservableObject {
             }
 
             entryMap = Dictionary(uniqueKeysWithValues: entries.map { ($0.path, $0) })
+            rebuildSearchRecords()
             lastIndexedAt = Date()
             isIndexing = false
             updateStatus()
@@ -251,6 +253,7 @@ final class AppModel: ObservableObject {
             }
 
             entryMap = Dictionary(uniqueKeysWithValues: stored.entries.map { ($0.path, $0) })
+            rebuildSearchRecords()
             lastIndexedAt = stored.createdAt
             updateStatus()
             scheduleSearch(immediate: true)
@@ -328,6 +331,7 @@ final class AppModel: ObservableObject {
         }
 
         guard changed else { return }
+        rebuildSearchRecords()
         updateStatus()
         scheduleSearch(immediate: true)
         scheduleSave()
@@ -394,6 +398,7 @@ final class AppModel: ObservableObject {
 
         if shouldRebuild {
             entryMap.removeAll(keepingCapacity: true)
+            searchRecords.removeAll(keepingCapacity: true)
             results.removeAll()
             selection = nil
             rebuildIndex()
@@ -402,10 +407,14 @@ final class AppModel: ObservableObject {
         }
     }
 
+    private func rebuildSearchRecords() {
+        searchRecords = SearchEngine.makeRecords(from: Array(entryMap.values))
+    }
+
     private func scheduleSearch(immediate: Bool = false) {
         searchTask?.cancel()
         let currentQuery = query
-        let entries = Array(entryMap.values)
+        let records = searchRecords
 
         searchTask = Task { [weak self] in
             if !immediate {
@@ -415,7 +424,7 @@ final class AppModel: ObservableObject {
 
             let currentSort = sortOption
             let found = await Task.detached(priority: .userInitiated) {
-                SearchEngine.search(currentQuery, in: entries, sort: currentSort)
+                SearchEngine.search(currentQuery, in: records, sort: currentSort)
             }.value
 
             guard !Task.isCancelled else { return }

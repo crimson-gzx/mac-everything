@@ -20,7 +20,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 最简单安装方式：
 
-1. 下载 `MacEverything-v0.5.0.dmg`。
+1. 下载 `MacEverything-v0.6.0.dmg`。
 2. 打开 DMG。
 3. 把 `MacEverything.app` 拖到 `Applications`。
 4. 到“应用程序”里打开 MacEverything。
@@ -45,6 +45,8 @@ https://github.com/crimson-gzx/mac-everything/releases
 - 常用过滤器/书签：内置 PDF、图片、视频、今天修改、大文件，也可保存当前搜索为自定义过滤器
 - Quick Look 预览：菜单、右键菜单、`⌘Y`，列表聚焦时也可按空格预览
 - 结果显示配置：可隐藏/显示路径、修改日期、大小、类型
+- 性能优化：搜索预计算缓存，避免每次输入都重复处理所有路径/文件名
+- 性能优化：文件图标缓存，减少滚动列表时反复调用系统图标服务
 - SwiftUI 原生 macOS 界面
 - 菜单栏常驻
 - 全局快捷键呼出，默认优先尝试 `⌘⇧F`
@@ -108,7 +110,7 @@ zsh build-app.sh
 生成 ZIP 和 DMG：
 
 ```bash
-zsh scripts/package-release.sh 0.5.0
+zsh scripts/package-release.sh 0.6.0
 ```
 
 ## Apple 公证

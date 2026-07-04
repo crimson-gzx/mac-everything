@@ -359,8 +359,30 @@ private struct ParsedQuery: Sendable {
     }
 }
 
+struct SearchRecord: Sendable {
+    let entry: FileEntry
+    let lowerName: String
+    let lowerPath: String
+    let fileExtension: String
+
+    init(entry: FileEntry) {
+        self.entry = entry
+        self.lowerName = entry.name.lowercased()
+        self.lowerPath = entry.path.lowercased()
+        self.fileExtension = entry.fileExtension
+    }
+}
+
 enum SearchEngine {
+    static func makeRecords(from entries: [FileEntry]) -> [SearchRecord] {
+        entries.map(SearchRecord.init(entry:))
+    }
+
     static func search(_ rawQuery: String, in entries: [FileEntry], limit: Int = 500, sort: SearchSort = .relevance) -> [FileEntry] {
+        search(rawQuery, in: makeRecords(from: entries), limit: limit, sort: sort)
+    }
+
+    static func search(_ rawQuery: String, in records: [SearchRecord], limit: Int = 500, sort: SearchSort = .relevance) -> [FileEntry] {
         let query = ParsedQuery(rawQuery.trimmingCharacters(in: .whitespacesAndNewlines))
         let effectiveSort = query.requestedSort ?? sort
         let isEmptyQuery = query.includeTerms.isEmpty
@@ -372,28 +394,27 @@ enum SearchEngine {
             && query.dateRules.isEmpty
 
         if isEmptyQuery {
-            return Array(sortEntries(entries, sort: effectiveSort).prefix(limit))
+            return Array(sortEntries(records.map(\.entry), sort: effectiveSort).prefix(limit))
         }
 
         var ranked: [(entry: FileEntry, score: Int)] = []
-        ranked.reserveCapacity(min(entries.count, limit * 4))
+        ranked.reserveCapacity(min(records.count, limit * 4))
 
-        for entry in entries {
+        for record in records {
+            let entry = record.entry
             if let wantsFolders = query.wantsFolders, entry.isDirectory != wantsFolders { continue }
-            if !query.extensions.isEmpty, !query.extensions.contains(entry.fileExtension) { continue }
-            if query.excludedExtensions.contains(entry.fileExtension) { continue }
+            if !query.extensions.isEmpty, !query.extensions.contains(record.fileExtension) { continue }
+            if query.excludedExtensions.contains(record.fileExtension) { continue }
             if !query.sizeRules.allSatisfy({ $0.matches(entry.size) }) { continue }
             if !query.dateRules.allSatisfy({ $0.matches(entry.modifiedAt) }) { continue }
 
-            let name = entry.name.lowercased()
-            let path = entry.path.lowercased()
-            if query.excludeTerms.contains(where: { $0.matches(lowerName: name, lowerPath: path) }) { continue }
+            if query.excludeTerms.contains(where: { $0.matches(lowerName: record.lowerName, lowerPath: record.lowerPath) }) { continue }
 
             var score = entry.isDirectory ? 2 : 0
             var matched = true
 
             for term in query.includeTerms {
-                guard let termScore = term.score(lowerName: name, lowerPath: path) else {
+                guard let termScore = term.score(lowerName: record.lowerName, lowerPath: record.lowerPath) else {
                     matched = false
                     break
                 }

@@ -263,9 +263,7 @@ private struct ResultRow: View {
     }
 
     private var icon: NSImage {
-        let image = NSWorkspace.shared.icon(forFile: entry.path)
-        image.size = NSSize(width: 32, height: 32)
-        return image
+        FileIconCache.shared.icon(for: entry)
     }
 
     private var displayPath: String {
