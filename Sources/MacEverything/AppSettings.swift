@@ -14,18 +14,34 @@ struct SavedFilter: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+struct ResultDisplayOptions: Codable, Equatable, Sendable {
+    var showPath: Bool
+    var showModifiedDate: Bool
+    var showSize: Bool
+    var showKind: Bool
+
+    static let defaultValue = ResultDisplayOptions(
+        showPath: true,
+        showModifiedDate: true,
+        showSize: true,
+        showKind: true
+    )
+}
+
 struct AppSettings: Codable, Equatable, Sendable {
     var rootPaths: [String]
     var excludedPaths: [String]
     var searchHistory: [String]
     var savedFilters: [SavedFilter]
+    var displayOptions: ResultDisplayOptions
 
     static var defaultValue: AppSettings {
         AppSettings(
             rootPaths: [FileManager.default.homeDirectoryForCurrentUser.path],
             excludedPaths: [],
             searchHistory: [],
-            savedFilters: Self.defaultFilters
+            savedFilters: Self.defaultFilters,
+            displayOptions: .defaultValue
         )
     }
 
@@ -101,13 +117,21 @@ struct AppSettings: Codable, Equatable, Sendable {
         case excludedPaths
         case searchHistory
         case savedFilters
+        case displayOptions
     }
 
-    init(rootPaths: [String], excludedPaths: [String], searchHistory: [String], savedFilters: [SavedFilter]) {
+    init(
+        rootPaths: [String],
+        excludedPaths: [String],
+        searchHistory: [String],
+        savedFilters: [SavedFilter],
+        displayOptions: ResultDisplayOptions
+    ) {
         self.rootPaths = rootPaths
         self.excludedPaths = excludedPaths
         self.searchHistory = searchHistory
         self.savedFilters = savedFilters
+        self.displayOptions = displayOptions
         normalize()
     }
 
@@ -117,6 +141,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         excludedPaths = try container.decodeIfPresent([String].self, forKey: .excludedPaths) ?? []
         searchHistory = try container.decodeIfPresent([String].self, forKey: .searchHistory) ?? []
         savedFilters = try container.decodeIfPresent([SavedFilter].self, forKey: .savedFilters) ?? Self.defaultFilters
+        displayOptions = try container.decodeIfPresent(ResultDisplayOptions.self, forKey: .displayOptions) ?? .defaultValue
         normalize()
     }
 
@@ -126,6 +151,7 @@ struct AppSettings: Codable, Equatable, Sendable {
         try container.encode(excludedPaths, forKey: .excludedPaths)
         try container.encode(searchHistory, forKey: .searchHistory)
         try container.encode(savedFilters, forKey: .savedFilters)
+        try container.encode(displayOptions, forKey: .displayOptions)
     }
 }
 

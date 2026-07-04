@@ -25,6 +25,7 @@ final class AppModel: ObservableObject {
     var excludedPaths: [String] { settings.excludedPaths }
     var searchHistory: [String] { settings.searchHistory }
     var savedFilters: [SavedFilter] { settings.savedFilters }
+    var displayOptions: ResultDisplayOptions { settings.displayOptions }
 
     private var entryMap: [String: FileEntry] = [:]
     private var watcher: FileSystemWatcher?
@@ -94,6 +95,10 @@ final class AppModel: ObservableObject {
     func submitSearch() {
         recordCurrentQuery()
         openSelected()
+    }
+
+    func previewSelected() {
+        QuickLookPreviewer.shared.preview(selected: selectedEntry, results: results)
     }
 
     func revealSelected() {
@@ -218,6 +223,19 @@ final class AppModel: ObservableObject {
         next.searchHistory.removeAll()
         applySettings(next, shouldRebuild: false)
         statusText = "已清空搜索历史"
+    }
+
+    func setDisplayOption(_ keyPath: WritableKeyPath<ResultDisplayOptions, Bool>, to value: Bool) {
+        var next = settings
+        next.displayOptions[keyPath: keyPath] = value
+        applySettings(next, shouldRebuild: false)
+    }
+
+    func resetDisplayOptions() {
+        var next = settings
+        next.displayOptions = .defaultValue
+        applySettings(next, shouldRebuild: false)
+        statusText = "已恢复默认显示列"
     }
 
     private func loadExistingIndexOrBuild() async {

@@ -112,6 +112,11 @@ struct MacEverythingCommands: Commands {
             }
             .keyboardShortcut(.return, modifiers: [.command])
 
+            Button("快速预览") {
+                model.previewSelected()
+            }
+            .keyboardShortcut("y", modifiers: [.command])
+
             Button("复制路径") {
                 model.copySelectedPath()
             }

@@ -23,6 +23,10 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .focusMacEverythingSearch)) { _ in
             searchFocused = true
         }
+        .onKeyPress(.space) {
+            model.previewSelected()
+            return .handled
+        }
         .sheet(isPresented: $showingIndexSettings) {
             IndexSettingsView(model: model)
         }
@@ -57,6 +61,9 @@ struct ContentView: View {
             }
 
             Menu {
+                Button("预览所选文件") { model.previewSelected() }
+                    .disabled(model.selectedEntry == nil)
+                Divider()
                 Button("索引目录设置…") { showingIndexSettings = true }
                 Button("重建索引") { model.rebuildIndex() }
                 Button("打开完全磁盘访问设置") { model.openFullDiskAccessSettings() }
@@ -97,6 +104,26 @@ struct ContentView: View {
                         Button("清空历史") { model.clearSearchHistory() }
                     }
                 }
+                Menu("显示列") {
+                    Toggle("路径", isOn: Binding(
+                        get: { model.displayOptions.showPath },
+                        set: { model.setDisplayOption(\.showPath, to: $0) }
+                    ))
+                    Toggle("修改日期", isOn: Binding(
+                        get: { model.displayOptions.showModifiedDate },
+                        set: { model.setDisplayOption(\.showModifiedDate, to: $0) }
+                    ))
+                    Toggle("大小", isOn: Binding(
+                        get: { model.displayOptions.showSize },
+                        set: { model.setDisplayOption(\.showSize, to: $0) }
+                    ))
+                    Toggle("类型", isOn: Binding(
+                        get: { model.displayOptions.showKind },
+                        set: { model.setDisplayOption(\.showKind, to: $0) }
+                    ))
+                    Divider()
+                    Button("恢复默认显示") { model.resetDisplayOptions() }
+                }
                 Menu("排序：\(model.sortOption.label)") {
                     ForEach(SearchSort.allCases) { option in
                         Button(option.label) { model.sortOption = option }
@@ -128,7 +155,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List(model.results, selection: $model.selection) { entry in
-                ResultRow(entry: entry)
+                ResultRow(entry: entry, displayOptions: model.displayOptions)
                     .tag(entry.id)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) {
@@ -139,6 +166,10 @@ struct ContentView: View {
                         Button("打开") {
                             model.selection = entry.id
                             model.openSelected()
+                        }
+                        Button("快速预览") {
+                            model.selection = entry.id
+                            model.previewSelected()
                         }
                         Button("在 Finder 中显示") {
                             model.selection = entry.id
@@ -188,6 +219,7 @@ struct ContentView: View {
 
 private struct ResultRow: View {
     let entry: FileEntry
+    let displayOptions: ResultDisplayOptions
 
     var body: some View {
         HStack(spacing: 11) {
@@ -200,23 +232,27 @@ private struct ResultRow: View {
                 Text(entry.name)
                     .font(.system(size: 13.5, weight: .medium))
                     .lineLimit(1)
-                Text(displayPath)
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                if displayOptions.showPath {
+                    Text(displayPath)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
 
             Spacer(minLength: 12)
 
             VStack(alignment: .trailing, spacing: 3) {
-                if let modifiedAt = entry.modifiedAt {
+                if displayOptions.showModifiedDate, let modifiedAt = entry.modifiedAt {
                     Text(modifiedAt, format: .dateTime.year().month().day())
                 }
-                if let size = entry.size, !entry.isDirectory {
+                if displayOptions.showSize, let size = entry.size, !entry.isDirectory {
                     Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-                } else if entry.isDirectory {
+                } else if displayOptions.showKind, entry.isDirectory {
                     Text("文件夹")
+                } else if displayOptions.showKind, !entry.fileExtension.isEmpty {
+                    Text(entry.fileExtension.uppercased())
                 }
             }
             .font(.caption2)
