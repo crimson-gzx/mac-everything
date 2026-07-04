@@ -1,17 +1,35 @@
 # MacEverything
 
+[中文说明](README.zh-CN.md) · English
+
+<p align="center">
+  <img src="assets/preview.svg" alt="MacEverything preview" width="900">
+</p>
+
 A native macOS file-name search utility inspired by Windows Everything.
 
 MacEverything builds a local index first, then searches from memory for near-instant results. It uses macOS FSEvents to keep the index fresh when files are added, moved, renamed, or deleted.
 
 > This is an early prototype. It is designed for direct distribution/self-hosted use first, not the Mac App Store sandbox model yet.
 
+## Download
+
+Download the latest build from GitHub Releases:
+
+```text
+https://github.com/crimson-gzx/mac-everything/releases
+```
+
+For the first prototype, download `MacEverything-v0.1.0.zip`, unzip it, and move `MacEverything.app` to `/Applications`.
+
+If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
+
 ## Features
 
 - Fast file and folder search from an in-memory index
 - Native SwiftUI macOS interface
 - Menu bar app
-- Global shortcut with fallback registration
+- Global shortcut with fallback registration, preferring `⌘⇧F`
 - Double-click or Enter to open
 - Command + Enter to reveal in Finder
 - Context menu actions: open, reveal, open parent folder, copy path
@@ -22,10 +40,6 @@ MacEverything builds a local index first, then searches from memory for near-ins
   - `ext:jpg,png` — filter by multiple extensions
   - `type:file` — files only
   - `type:folder` — folders only
-
-## Screenshots
-
-Screenshots are not included yet. Contributions or UI suggestions are welcome.
 
 ## Requirements
 
@@ -108,7 +122,7 @@ Daily search should feel instant after the first index build, but the initial sc
 - Better keyboard shortcut preferences
 - Search result preview
 - DMG packaging and notarization
-- App icon and screenshots
+- Real `.icns` app icon
 - App Store-friendly sandbox mode
 - Better ranking and fuzzy matching
 
