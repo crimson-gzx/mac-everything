@@ -20,7 +20,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 最简单安装方式：
 
-1. 下载 `MacEverything-v0.1.0.dmg`。
+1. 下载 `MacEverything-v0.2.0.dmg`。
 2. 打开 DMG。
 3. 把 `MacEverything.app` 拖到 `Applications`。
 4. 到“应用程序”里打开 MacEverything。
@@ -45,12 +45,21 @@ https://github.com/crimson-gzx/mac-everything/releases
 - `⌘ Enter` 在 Finder 中显示
 - 右键菜单：打开、Finder 显示、打开所在文件夹、复制路径
 - FSEvents 增量监听文件变化
-- 搜索语法：
+- 更接近 Everything 的搜索语法：
   - `report final`：多个关键词同时匹配
-  - `ext:pdf`：只看 PDF
-  - `ext:jpg,png`：多个扩展名
-  - `type:file`：只看文件
-  - `type:folder`：只看文件夹
+  - `"final report"`：短语匹配
+  - `*.pdf`、`report*`：通配符
+  - `!temp` 或 `-temp`：排除关键词
+  - `report|invoice`：OR 匹配
+  - `name:photo`：只匹配文件名
+  - `path:Desktop`：只匹配路径
+  - `ext:pdf`、`ext:jpg,png`：扩展名筛选
+  - `!ext:tmp`：排除扩展名
+  - `type:file`、`type:folder`：文件/文件夹筛选
+  - `size:>10mb`、`size:<1gb`：大小筛选
+  - `date:today`、`date:last7d`、`date:2026-07-04`：修改日期筛选
+  - `sort:name`、`sort:size`、`sort:date`：搜索框内指定排序
+- 右上角菜单支持排序：相关度、名称、路径、最近修改、大小
 
 ## 权限设置
 
@@ -92,7 +101,7 @@ zsh build-app.sh
 生成 ZIP 和 DMG：
 
 ```bash
-zsh scripts/package-release.sh 0.1.0
+zsh scripts/package-release.sh 0.2.0
 ```
 
 ## Apple 公证

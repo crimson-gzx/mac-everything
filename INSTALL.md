@@ -1,6 +1,6 @@
 # MacEverything Installation
 
-Recommended download: `MacEverything-v0.1.0.dmg`.
+Recommended download: `MacEverything-v0.2.0.dmg`.
 
 ## Quick install
 

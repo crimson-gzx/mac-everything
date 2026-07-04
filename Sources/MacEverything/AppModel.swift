@@ -15,6 +15,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var statusText = "准备中…"
     @Published private(set) var lastIndexedAt: Date?
     @Published var hotKeyDisplay = "⌘⇧F"
+    @Published var sortOption: SearchSort = .relevance {
+        didSet { scheduleSearch(immediate: true) }
+    }
 
     let roots: [URL] = [FileManager.default.homeDirectoryForCurrentUser]
 
@@ -200,8 +203,9 @@ final class AppModel: ObservableObject {
             }
             guard !Task.isCancelled, let self else { return }
 
+            let currentSort = sortOption
             let found = await Task.detached(priority: .userInitiated) {
-                SearchEngine.search(currentQuery, in: entries)
+                SearchEngine.search(currentQuery, in: entries, sort: currentSort)
             }.value
 
             guard !Task.isCancelled else { return }

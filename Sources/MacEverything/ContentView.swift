@@ -30,7 +30,7 @@ struct ContentView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("搜索文件和文件夹，例如：report ext:pdf", text: $model.query)
+            TextField("搜索：*.pdf !temp name:report path:Desktop size:>10mb date:today", text: $model.query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 20, weight: .medium))
                 .focused($searchFocused)
@@ -56,8 +56,14 @@ struct ContentView: View {
                 Button("重建索引") { model.rebuildIndex() }
                 Button("打开完全磁盘访问设置") { model.openFullDiskAccessSettings() }
                 Divider()
+                Menu("排序：\(model.sortOption.label)") {
+                    ForEach(SearchSort.allCases) { option in
+                        Button(option.label) { model.sortOption = option }
+                    }
+                }
+                Divider()
                 Text("快捷键：\(model.hotKeyDisplay)")
-                Text("筛选：ext:pdf  type:file  type:folder")
+                Text("语法：*.pdf  !temp  name:  path:  size:>10mb  date:today")
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.system(size: 17))
@@ -116,6 +122,7 @@ struct ContentView: View {
             Text(model.statusText)
             if !model.query.isEmpty {
                 Text("找到 \(model.results.count) 条")
+                Text("排序：\(model.sortOption.label)")
             }
             Spacer()
             Text("Enter 打开  ⌘↩ Finder  \(model.hotKeyDisplay) 呼出")

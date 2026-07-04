@@ -16,6 +16,7 @@ DerivedData/
 dist/
 *.app
 *.dmg
+assets/AppIcon.iconset/
 
 # Credentials / secrets
 AuthKey_*.p8

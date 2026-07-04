@@ -20,7 +20,7 @@ Download the latest build from GitHub Releases:
 https://github.com/crimson-gzx/mac-everything/releases
 ```
 
-Recommended: download `MacEverything-v0.1.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
+Recommended: download `MacEverything-v0.2.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
@@ -34,12 +34,21 @@ If macOS blocks the app because it was downloaded from the internet, right-click
 - Command + Enter to reveal in Finder
 - Context menu actions: open, reveal, open parent folder, copy path
 - Incremental file-system updates via FSEvents
-- Search filters:
+- More Everything-like search syntax:
   - `report final` — match multiple keywords
-  - `ext:pdf` — filter by extension
-  - `ext:jpg,png` — filter by multiple extensions
-  - `type:file` — files only
-  - `type:folder` — folders only
+  - `"final report"` — phrase matching
+  - `*.pdf`, `report*` — wildcard matching
+  - `!temp` or `-temp` — exclude keywords
+  - `report|invoice` — OR matching
+  - `name:photo` — match file name only
+  - `path:Desktop` — match path only
+  - `ext:pdf`, `ext:jpg,png` — extension filters
+  - `!ext:tmp` — exclude extensions
+  - `type:file`, `type:folder` — file/folder filters
+  - `size:>10mb`, `size:<1gb` — size filters
+  - `date:today`, `date:last7d`, `date:2026-07-04` — modified date filters
+  - `sort:name`, `sort:size`, `sort:date` — sort from the search box
+- Sort menu: relevance, name, path, modified date, file size
 
 ## Requirements
 
@@ -68,7 +77,7 @@ zsh build-app.sh
 Build ZIP and DMG release artifacts:
 
 ```bash
-zsh scripts/package-release.sh 0.1.0
+zsh scripts/package-release.sh 0.2.0
 ```
 
 ## Notarization
