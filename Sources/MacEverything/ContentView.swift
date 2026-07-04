@@ -38,7 +38,7 @@ struct ContentView: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 20, weight: .medium))
                 .focused($searchFocused)
-                .onSubmit { model.openSelected() }
+                .onSubmit { model.submitSearch() }
 
             if !model.query.isEmpty {
                 Button {
@@ -61,6 +61,42 @@ struct ContentView: View {
                 Button("重建索引") { model.rebuildIndex() }
                 Button("打开完全磁盘访问设置") { model.openFullDiskAccessSettings() }
                 Divider()
+                Menu("过滤器") {
+                    Button("保存当前搜索为过滤器…") { model.saveCurrentQueryAsFilter() }
+                        .disabled(model.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("恢复默认过滤器") { model.resetDefaultFilters() }
+                    Divider()
+                    if model.savedFilters.isEmpty {
+                        Text("暂无过滤器")
+                    } else {
+                        ForEach(model.savedFilters) { filter in
+                            Button("\(filter.name)  —  \(filter.query)") {
+                                model.applySavedFilter(filter)
+                            }
+                        }
+                        Divider()
+                        Menu("删除过滤器") {
+                            ForEach(model.savedFilters) { filter in
+                                Button(role: .destructive) {
+                                    model.removeSavedFilter(filter)
+                                } label: {
+                                    Text(filter.name)
+                                }
+                            }
+                        }
+                    }
+                }
+                Menu("历史") {
+                    if model.searchHistory.isEmpty {
+                        Text("暂无搜索历史")
+                    } else {
+                        ForEach(model.searchHistory, id: \.self) { historyQuery in
+                            Button(historyQuery) { model.applyHistoryQuery(historyQuery) }
+                        }
+                        Divider()
+                        Button("清空历史") { model.clearSearchHistory() }
+                    }
+                }
                 Menu("排序：\(model.sortOption.label)") {
                     ForEach(SearchSort.allCases) { option in
                         Button(option.label) { model.sortOption = option }
@@ -133,6 +169,12 @@ struct ContentView: View {
             if !model.query.isEmpty {
                 Text("找到 \(model.results.count) 条")
                 Text("排序：\(model.sortOption.label)")
+            }
+            if !model.savedFilters.isEmpty {
+                Text("过滤器 \(model.savedFilters.count) 个")
+            }
+            if !model.searchHistory.isEmpty {
+                Text("历史 \(model.searchHistory.count) 条")
             }
             Spacer()
             Text("Enter 打开  ⌘↩ Finder  \(model.hotKeyDisplay) 呼出")

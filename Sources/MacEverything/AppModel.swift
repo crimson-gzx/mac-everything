@@ -23,6 +23,8 @@ final class AppModel: ObservableObject {
     var roots: [URL] { settings.rootURLs }
     var rootPaths: [String] { settings.rootPaths }
     var excludedPaths: [String] { settings.excludedPaths }
+    var searchHistory: [String] { settings.searchHistory }
+    var savedFilters: [SavedFilter] { settings.savedFilters }
 
     private var entryMap: [String: FileEntry] = [:]
     private var watcher: FileSystemWatcher?
@@ -84,8 +86,14 @@ final class AppModel: ObservableObject {
     }
 
     func openSelected() {
+        recordCurrentQuery()
         guard let entry = selectedEntry else { return }
         NSWorkspace.shared.open(entry.url)
+    }
+
+    func submitSearch() {
+        recordCurrentQuery()
+        openSelected()
     }
 
     func revealSelected() {
@@ -155,6 +163,61 @@ final class AppModel: ObservableObject {
         var next = settings
         next.excludedPaths.removeAll()
         applySettings(next, shouldRebuild: true)
+    }
+
+    func applyHistoryQuery(_ historyQuery: String) {
+        query = historyQuery
+        recordQuery(historyQuery)
+        scheduleSearch(immediate: true)
+    }
+
+    func applySavedFilter(_ filter: SavedFilter) {
+        query = filter.query
+        recordQuery(filter.query)
+        scheduleSearch(immediate: true)
+    }
+
+    func saveCurrentQueryAsFilter() {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            statusText = "当前搜索为空，无法保存过滤器"
+            return
+        }
+        let defaultName = trimmed.count > 24 ? String(trimmed.prefix(24)) + "…" : trimmed
+        guard let name = promptForText(title: "保存过滤器", message: "给这个搜索条件起个名字", defaultValue: defaultName) else { return }
+        saveFilter(name: name, query: trimmed)
+    }
+
+    func saveFilter(name: String, query filterQuery: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedQuery = filterQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty, !trimmedQuery.isEmpty else { return }
+        var next = settings
+        next.savedFilters.removeAll { $0.name.caseInsensitiveCompare(trimmedName) == .orderedSame }
+        next.savedFilters.insert(SavedFilter(name: trimmedName, query: trimmedQuery), at: 0)
+        applySettings(next, shouldRebuild: false)
+        statusText = "已保存过滤器：\(trimmedName)"
+    }
+
+    func removeSavedFilter(_ filter: SavedFilter) {
+        var next = settings
+        next.savedFilters.removeAll { $0.id == filter.id }
+        applySettings(next, shouldRebuild: false)
+        statusText = "已删除过滤器"
+    }
+
+    func resetDefaultFilters() {
+        var next = settings
+        next.savedFilters = AppSettings.defaultFilters
+        applySettings(next, shouldRebuild: false)
+        statusText = "已恢复默认过滤器"
+    }
+
+    func clearSearchHistory() {
+        var next = settings
+        next.searchHistory.removeAll()
+        applySettings(next, shouldRebuild: false)
+        statusText = "已清空搜索历史"
     }
 
     private func loadExistingIndexOrBuild() async {
@@ -262,6 +325,36 @@ final class AppModel: ObservableObject {
         return panel.runModal() == .OK ? panel.url : nil
     }
 
+    private func promptForText(title: String, message: String, defaultValue: String) -> String? {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "保存")
+        alert.addButton(withTitle: "取消")
+
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        field.stringValue = defaultValue
+        alert.accessoryView = field
+
+        let response = alert.runModal()
+        guard response == .alertFirstButtonReturn else { return nil }
+        return field.stringValue
+    }
+
+    private func recordCurrentQuery() {
+        recordQuery(query)
+    }
+
+    private func recordQuery(_ rawQuery: String) {
+        let trimmed = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        var next = settings
+        next.searchHistory.removeAll { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+        next.searchHistory.insert(trimmed, at: 0)
+        next.searchHistory = AppSettings.normalizedQueries(next.searchHistory, limit: 30)
+        applySettings(next, shouldRebuild: false)
+    }
+
     private func applySettings(_ nextSettings: AppSettings, shouldRebuild: Bool) {
         var normalized = nextSettings
         normalized.normalize()
@@ -270,12 +363,16 @@ final class AppModel: ObservableObject {
         }
         guard normalized != settings else { return }
 
+        let indexScopeChanged = normalized.rootPaths != settings.rootPaths || normalized.excludedPaths != settings.excludedPaths
         settings = normalized
         try? SettingsStore.save(normalized)
-        pendingPaths.removeAll(keepingCapacity: true)
-        pendingFullRescan = false
-        restartWatcher()
-        statusText = "索引设置已更新"
+
+        if indexScopeChanged {
+            pendingPaths.removeAll(keepingCapacity: true)
+            pendingFullRescan = false
+            restartWatcher()
+            statusText = "索引设置已更新"
+        }
 
         if shouldRebuild {
             entryMap.removeAll(keepingCapacity: true)

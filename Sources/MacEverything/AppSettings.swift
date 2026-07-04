@@ -1,27 +1,57 @@
 import Foundation
 
+struct SavedFilter: Codable, Equatable, Identifiable, Sendable {
+    var id: UUID
+    var name: String
+    var query: String
+    var createdAt: Date
+
+    init(id: UUID = UUID(), name: String, query: String, createdAt: Date = Date()) {
+        self.id = id
+        self.name = name
+        self.query = query
+        self.createdAt = createdAt
+    }
+}
+
 struct AppSettings: Codable, Equatable, Sendable {
     var rootPaths: [String]
     var excludedPaths: [String]
+    var searchHistory: [String]
+    var savedFilters: [SavedFilter]
 
     static var defaultValue: AppSettings {
         AppSettings(
             rootPaths: [FileManager.default.homeDirectoryForCurrentUser.path],
-            excludedPaths: []
+            excludedPaths: [],
+            searchHistory: [],
+            savedFilters: Self.defaultFilters
         )
     }
 
+    static var defaultFilters: [SavedFilter] {
+        [
+            SavedFilter(name: "PDF", query: "*.pdf"),
+            SavedFilter(name: "图片", query: "ext:jpg,jpeg,png,gif,webp,heic"),
+            SavedFilter(name: "视频", query: "ext:mp4,mov,mkv,avi"),
+            SavedFilter(name: "今天修改", query: "date:today"),
+            SavedFilter(name: "大文件", query: "type:file size:>100mb sort:size")
+        ]
+    }
+
     var rootURLs: [URL] {
-        normalized(paths: rootPaths).map { URL(fileURLWithPath: $0) }
+        Self.normalized(paths: rootPaths).map { URL(fileURLWithPath: $0) }
     }
 
     var excludedURLs: [URL] {
-        normalized(paths: excludedPaths).map { URL(fileURLWithPath: $0) }
+        Self.normalized(paths: excludedPaths).map { URL(fileURLWithPath: $0) }
     }
 
     mutating func normalize() {
         rootPaths = Self.normalized(paths: rootPaths)
         excludedPaths = Self.normalized(paths: excludedPaths)
+        searchHistory = Self.normalizedQueries(searchHistory, limit: 30)
+        savedFilters = Self.normalizedFilters(savedFilters)
     }
 
     static func normalized(paths: [String]) -> [String] {
@@ -36,8 +66,66 @@ struct AppSettings: Codable, Equatable, Sendable {
         return result
     }
 
-    private func normalized(paths: [String]) -> [String] {
-        Self.normalized(paths: paths)
+    static func normalizedQueries(_ queries: [String], limit: Int) -> [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for query in queries {
+            let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            let key = trimmed.lowercased()
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            result.append(trimmed)
+            if result.count >= limit { break }
+        }
+        return result
+    }
+
+    static func normalizedFilters(_ filters: [SavedFilter]) -> [SavedFilter] {
+        var seenNames = Set<String>()
+        var result: [SavedFilter] = []
+        for filter in filters {
+            let name = filter.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            let query = filter.query.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty, !query.isEmpty else { continue }
+            let key = name.lowercased()
+            guard !seenNames.contains(key) else { continue }
+            seenNames.insert(key)
+            result.append(SavedFilter(id: filter.id, name: name, query: query, createdAt: filter.createdAt))
+        }
+        return result
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case rootPaths
+        case excludedPaths
+        case searchHistory
+        case savedFilters
+    }
+
+    init(rootPaths: [String], excludedPaths: [String], searchHistory: [String], savedFilters: [SavedFilter]) {
+        self.rootPaths = rootPaths
+        self.excludedPaths = excludedPaths
+        self.searchHistory = searchHistory
+        self.savedFilters = savedFilters
+        normalize()
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        rootPaths = try container.decodeIfPresent([String].self, forKey: .rootPaths) ?? Self.defaultValue.rootPaths
+        excludedPaths = try container.decodeIfPresent([String].self, forKey: .excludedPaths) ?? []
+        searchHistory = try container.decodeIfPresent([String].self, forKey: .searchHistory) ?? []
+        savedFilters = try container.decodeIfPresent([SavedFilter].self, forKey: .savedFilters) ?? Self.defaultFilters
+        normalize()
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(rootPaths, forKey: .rootPaths)
+        try container.encode(excludedPaths, forKey: .excludedPaths)
+        try container.encode(searchHistory, forKey: .searchHistory)
+        try container.encode(savedFilters, forKey: .savedFilters)
     }
 }
 
@@ -53,6 +141,9 @@ enum SettingsStore {
             settings.normalize()
             if settings.rootPaths.isEmpty {
                 settings.rootPaths = AppSettings.defaultValue.rootPaths
+            }
+            if settings.savedFilters.isEmpty {
+                settings.savedFilters = AppSettings.defaultFilters
             }
             return settings
         } catch {
