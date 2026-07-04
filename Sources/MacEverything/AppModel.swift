@@ -424,7 +424,15 @@ final class AppModel: ObservableObject {
 
             let currentSort = sortOption
             let found = await Task.detached(priority: .userInitiated) {
-                SearchEngine.search(currentQuery, in: records, sort: currentSort)
+                let candidatePaths = IndexDatabase.candidatePaths(for: currentQuery)
+                let candidateRecords: [SearchRecord]
+                if let candidatePaths {
+                    let candidateSet = Set(candidatePaths)
+                    candidateRecords = records.filter { candidateSet.contains($0.entry.path) }
+                } else {
+                    candidateRecords = records
+                }
+                return SearchEngine.search(currentQuery, in: candidateRecords, sort: currentSort)
             }.value
 
             guard !Task.isCancelled else { return }

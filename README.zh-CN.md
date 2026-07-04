@@ -20,7 +20,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 最简单安装方式：
 
-1. 下载 `MacEverything-v0.7.0.dmg`。
+1. 下载 `MacEverything-v0.8.0.dmg`。
 2. 打开 DMG。
 3. 把 `MacEverything.app` 拖到 `Applications`。
 4. 到“应用程序”里打开 MacEverything。
@@ -48,6 +48,7 @@ https://github.com/crimson-gzx/mac-everything/releases
 - 性能优化：搜索预计算缓存，避免每次输入都重复处理所有路径/文件名
 - 性能优化：文件图标缓存，减少滚动列表时反复调用系统图标服务
 - SQLite 索引后端：优先使用 `file-index.sqlite`，旧版 `file-index.plist` 会自动迁移
+- SQLite FTS5 候选搜索：普通关键词先由数据库筛候选路径，再由内存搜索精排
 - SwiftUI 原生 macOS 界面
 - 菜单栏常驻
 - 全局快捷键呼出，默认优先尝试 `⌘⇧F`
@@ -111,7 +112,7 @@ zsh build-app.sh
 生成 ZIP 和 DMG：
 
 ```bash
-zsh scripts/package-release.sh 0.7.0
+zsh scripts/package-release.sh 0.8.0
 ```
 
 ## Apple 公证

@@ -47,6 +47,7 @@ enum IndexDatabase {
         try execute(db, "BEGIN IMMEDIATE TRANSACTION")
         do {
             try execute(db, "DELETE FROM metadata")
+            try? clearFTS(db: db)
             try execute(db, "DELETE FROM entries")
             try writeMetadata(db: db, key: "version", value: String(StoredIndex.currentVersion))
             try writeMetadata(db: db, key: "createdAt", value: String(Date().timeIntervalSince1970))
@@ -58,6 +59,38 @@ enum IndexDatabase {
         } catch {
             try? execute(db, "ROLLBACK")
             throw error
+        }
+    }
+
+    static func candidatePaths(for rawQuery: String, limit: Int = 5_000) -> [String]? {
+        guard let matchQuery = makeFTSQuery(from: rawQuery) else { return nil }
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return nil }
+
+        do {
+            let db = try open(readOnly: true)
+            defer { sqlite3_close(db) }
+
+            let sql = """
+            SELECT path
+            FROM entries_fts
+            WHERE entries_fts MATCH ?
+            LIMIT ?
+            """
+            var statement: OpaquePointer?
+            try prepare(db, sql, statement: &statement)
+            defer { sqlite3_finalize(statement) }
+            bindText(statement, 1, matchQuery)
+            sqlite3_bind_int(statement, 2, Int32(limit))
+
+            var paths: [String] = []
+            while sqlite3_step(statement) == SQLITE_ROW {
+                if let text = sqlite3_column_text(statement, 0) {
+                    paths.append(String(cString: text))
+                }
+            }
+            return paths.isEmpty ? nil : paths
+        } catch {
+            return nil
         }
     }
 
@@ -92,6 +125,18 @@ enum IndexDatabase {
             extension TEXT NOT NULL
         )
         """)
+        try? execute(db, """
+        CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
+            path,
+            name,
+            extension,
+            tokenize='unicode61'
+        )
+        """)
+    }
+
+    private static func clearFTS(db: OpaquePointer?) throws {
+        try execute(db, "DELETE FROM entries_fts")
     }
 
     private static func dropIndexes(db: OpaquePointer?) throws {
@@ -152,6 +197,9 @@ enum IndexDatabase {
         try prepare(db, sql, statement: &statement)
         defer { sqlite3_finalize(statement) }
 
+        let ftsStatement = try? prepareFTSInsert(db: db)
+        defer { sqlite3_finalize(ftsStatement) }
+
         for entry in entries {
             sqlite3_reset(statement)
             sqlite3_clear_bindings(statement)
@@ -175,6 +223,27 @@ enum IndexDatabase {
             guard sqlite3_step(statement) == SQLITE_DONE else {
                 throw sqliteError(db)
             }
+
+            if let ftsStatement {
+                try insertFTS(entry: entry, statement: ftsStatement, db: db)
+            }
+        }
+    }
+
+    private static func prepareFTSInsert(db: OpaquePointer?) throws -> OpaquePointer? {
+        var statement: OpaquePointer?
+        try prepare(db, "INSERT INTO entries_fts (path, name, extension) VALUES (?, ?, ?)", statement: &statement)
+        return statement
+    }
+
+    private static func insertFTS(entry: FileEntry, statement: OpaquePointer?, db: OpaquePointer?) throws {
+        sqlite3_reset(statement)
+        sqlite3_clear_bindings(statement)
+        bindText(statement, 1, entry.path)
+        bindText(statement, 2, entry.name.lowercased())
+        bindText(statement, 3, entry.fileExtension)
+        guard sqlite3_step(statement) == SQLITE_DONE else {
+            throw sqliteError(db)
         }
     }
 
@@ -235,5 +304,24 @@ enum IndexDatabase {
             return []
         }
         return decoded
+    }
+
+    private static func sanitizedFTSTerm(_ raw: String) -> String? {
+        var value = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !value.isEmpty else { return nil }
+        if value.hasPrefix("!") || value.hasPrefix("-") { return nil }
+        if value.contains(":") || value.contains("|") { return nil }
+        let wantsPrefix = value.hasSuffix("*")
+        value = value.trimmingCharacters(in: CharacterSet(charactersIn: "*?"))
+        let pieces = value.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
+        guard !pieces.isEmpty else { return nil }
+        return pieces.map { $0 + (wantsPrefix ? "*" : "") }.joined(separator: " AND ")
+    }
+
+    private static func makeFTSQuery(from rawQuery: String) -> String? {
+        let words = rawQuery.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        let clean = words.compactMap { sanitizedFTSTerm($0) }
+        guard !clean.isEmpty else { return nil }
+        return clean.joined(separator: " AND ")
     }
 }
