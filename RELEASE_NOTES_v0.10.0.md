@@ -28,8 +28,16 @@
 
 v0.10.0 让这些优化变得可观察：你可以看到一次搜索到底是走 FTS 还是内存搜索、耗时多少、候选集有多大。
 
+## 首次打开和安全提示
+
+第一次打开可能会有点卡，这是正常的：macOS 会校验从网上下载的 App，MacEverything 也会初始化本地 SQLite / FTS 索引。如果你点击“重建索引”，还需要扫描所选目录；文件越多，首次索引越久。
+
+当前 DMG 还没有 Apple Developer ID 签名和 Apple 公证，所以 macOS 可能提示“无法验证开发者”或“不安全”。这不代表它一定有病毒，而是系统无法验证它是受信任开发者签发并公证过的 App。
+
+临时打开方式：把 App 拖到 Applications 后，右键 `MacEverything.app` → 打开 → 再次确认打开。
+
+正式解决方式：后续需要使用 Developer ID Application 证书签名，并提交 Apple notarization 公证，之后再发布公证过的 DMG。
+
 ## 注意
 
 如果你从旧版本升级，建议点一次“重建索引”，保证 SQLite 和 FTS 表完整。
-
-当前 DMG 仍未 Apple 公证，首次打开可能需要右键打开。

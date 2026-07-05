@@ -35,6 +35,10 @@ https://github.com/crimson-gzx/mac-everything/releases
 4. 到“应用程序”里打开 MacEverything。
 5. 如果 macOS 拦截：右键 App → 打开。
 
+第一次打开可能会有点卡：macOS 会做安全校验，App 也会初始化 SQLite/FTS 索引；如果你重建索引，还会扫描所选目录。索引完成后，日常搜索会快很多。
+
+当前版本还没有 Apple Developer ID 签名和 Apple 公证，所以可能出现“无法验证开发者 / 不安全”的提示。临时解决方式是右键 App → 打开；正式解决方式是后续发布 Developer ID 签名并公证过的 DMG。
+
 更详细的安装说明见：[INSTALL.zh-CN.md](INSTALL.zh-CN.md)。英文安装说明见：[INSTALL.md](INSTALL.md)。
 
 ## 适合谁

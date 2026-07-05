@@ -35,6 +35,10 @@ Recommended: download `MacEverything-v0.10.0.dmg`, open it, then drag `MacEveryt
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
+The first launch can feel slower than later launches because macOS verifies downloaded apps and MacEverything initializes its local SQLite/FTS index. If you rebuild the index, it also needs to scan your selected folders. After indexing finishes, normal searches should be much faster.
+
+The current GitHub Release build is not yet Developer ID signed or Apple-notarized, so macOS may show an “unverified developer” or “unsafe” warning. The temporary workaround is right-click → **Open**. The proper public-distribution fix is a Developer ID signed and notarized DMG.
+
 ## Features
 
 - Fast file and folder search from an in-memory index
