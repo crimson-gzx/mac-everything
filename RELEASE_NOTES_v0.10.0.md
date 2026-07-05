@@ -34,6 +34,8 @@ v0.10.0 让这些优化变得可观察：你可以看到一次搜索到底是走
 
 当前 DMG 还没有 Apple Developer ID 签名和 Apple 公证，所以 macOS 可能提示“无法验证开发者”或“不安全”。这不代表它一定有病毒，而是系统无法验证它是受信任开发者签发并公证过的 App。
 
+MacEverything 是完全开源项目，代码可以在 GitHub 上直接查看。当前版本只做本地文件名索引和搜索，不需要登录，不需要联网，也不会上传文件列表、文件内容或搜索记录。索引和设置默认保存在你自己的 Mac 上。
+
 临时打开方式：把 App 拖到 Applications 后，右键 `MacEverything.app` → 打开 → 再次确认打开。
 
 正式解决方式：后续需要使用 Developer ID Application 证书签名，并提交 Apple notarization 公证，之后再发布公证过的 DMG。

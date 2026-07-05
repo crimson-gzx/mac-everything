@@ -39,6 +39,8 @@ The first launch can feel slower than later launches because macOS verifies down
 
 The current GitHub Release build is not yet Developer ID signed or Apple-notarized, so macOS may show an “unverified developer” or “unsafe” warning. The temporary workaround is right-click → **Open**. The proper public-distribution fix is a Developer ID signed and notarized DMG.
 
+Privacy note: MacEverything is fully open source. Its current core feature set is local filename indexing and search. It does not require login, does not require network access for core features, and does not upload your file list, file contents, or search history. Indexes and settings are stored locally on your Mac by default.
+
 ## Features
 
 - Fast file and folder search from an in-memory index

@@ -23,6 +23,8 @@ After the first index is built, normal searches should be much faster. The botto
 
 The current GitHub Release build is not yet signed with an Apple Developer ID certificate and is not notarized by Apple. Gatekeeper may warn that the developer cannot be verified or that the app may be unsafe. This does not automatically mean the app is malware; it means macOS cannot yet verify it as a trusted Developer ID notarized app.
 
+Privacy note: MacEverything is fully open source and its code can be reviewed on GitHub. The current app is designed for local filename indexing and search. It does not require login, does not require network access for its core features, and does not upload your file list, file contents, or search history. Indexes and settings are stored locally on your Mac by default.
+
 Temporary workaround:
 
 1. Open `Applications`.

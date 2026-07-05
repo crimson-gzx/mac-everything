@@ -39,6 +39,8 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 当前版本还没有 Apple Developer ID 签名和 Apple 公证，所以可能出现“无法验证开发者 / 不安全”的提示。临时解决方式是右键 App → 打开；正式解决方式是后续发布 Developer ID 签名并公证过的 DMG。
 
+隐私说明：MacEverything 完全开源，当前核心功能是本地文件名索引和搜索，不需要登录，不需要联网，也不会上传你的文件列表、文件内容或搜索记录。索引和设置默认保存在你自己的 Mac 上。
+
 更详细的安装说明见：[INSTALL.zh-CN.md](INSTALL.zh-CN.md)。英文安装说明见：[INSTALL.md](INSTALL.md)。
 
 ## 适合谁
