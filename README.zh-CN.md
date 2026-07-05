@@ -1,14 +1,23 @@
 # MacEverything
 
-一个原生 macOS 文件名极速搜索工具，灵感来自 Windows 上的 Everything。
+<p align="center">
+  <strong>macOS 上的 Everything 风格极速文件搜索工具。</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/crimson-gzx/mac-everything/releases"><img alt="最新版" src="https://img.shields.io/github/v/release/crimson-gzx/mac-everything?style=flat-square"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
+  <img alt="Swift" src="https://img.shields.io/badge/Swift-SwiftUI-orange?style=flat-square&logo=swift">
+</p>
 
 <p align="center">
   <img src="assets/preview.svg" alt="MacEverything 预览" width="900">
 </p>
 
-MacEverything 的思路是：先建立一次本地索引，然后从内存里即时搜索；文件新增、删除、移动、重命名后，通过 macOS FSEvents 自动更新索引。
+MacEverything 是一个原生 macOS 文件搜索工具，灵感来自 Windows 上的 Everything。它使用本地 SQLite/FTS 索引、FSEvents 实时监听、全局快捷键和 Quick Look 预览，让你更快找到文件。
 
-> 当前还是早期原型，更适合 GitHub Release / 自行分发使用。它还不是 Mac App Store 沙盒版。
+如果这个项目对你有用，欢迎点个 Star。Star 越多，越容易让更多 Mac 用户找到这个开源替代方案。
 
 ## 下载安装
 

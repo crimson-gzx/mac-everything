@@ -1,16 +1,27 @@
 # MacEverything
 
+<p align="center">
+  <strong>Everything-style instant file search for macOS.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/crimson-gzx/mac-everything/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/crimson-gzx/mac-everything?style=flat-square"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple">
+  <img alt="Swift" src="https://img.shields.io/badge/Swift-SwiftUI-orange?style=flat-square&logo=swift">
+</p>
+
 [中文说明](README.zh-CN.md) · [中文安装说明](INSTALL.zh-CN.md) · [Installation](INSTALL.md) · English
 
 <p align="center">
   <img src="assets/preview.svg" alt="MacEverything preview" width="900">
 </p>
 
-A native macOS file-name search utility inspired by Windows Everything.
+MacEverything is a native macOS file search app inspired by Windows Everything. It builds a local SQLite/FTS-backed index, gives you near-instant filename search, and keeps results fresh with macOS FSEvents.
 
-MacEverything builds a local index first, then searches from memory for near-instant results. It uses macOS FSEvents to keep the index fresh when files are added, moved, renamed, or deleted.
+Highlights: global hotkey, Everything-like query syntax, index/exclusion folders, saved filters, search history, Quick Look preview, live updates, and visible performance metrics.
 
-> This is an early prototype. It is designed for direct distribution/self-hosted use first, not the Mac App Store sandbox model yet.
+> If this project is useful, please consider giving it a star. It helps more Mac users find a fast Everything-like search tool.
 
 ## Download
 
