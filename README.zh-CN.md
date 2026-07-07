@@ -29,13 +29,13 @@ https://github.com/crimson-gzx/mac-everything/releases
 
 最简单安装方式：
 
-1. 下载 `MacEverything-v0.10.0.dmg`。
+1. 下载 `MacEverything-v0.10.1.dmg`。
 2. 打开 DMG。
 3. 把 `MacEverything.app` 拖到 `Applications`。
 4. 到“应用程序”里打开 MacEverything。
 5. 如果 macOS 拦截：右键 App → 打开。
 
-第一次打开可能会有点卡：macOS 会做安全校验，App 也会初始化 SQLite/FTS 索引；如果你重建索引，还会扫描所选目录。索引完成后，日常搜索会快很多。
+第一次打开可能会有点卡：macOS 会做安全校验，App 也会初始化 SQLite/FTS 索引；如果你重建索引，还会扫描所选目录。索引完成后，后续启动会优先读取本地 SQLite 缓存，不会每次打开都全盘扫描。只有缓存不存在、索引目录/排除目录变化，或你手动点“重建索引”时，才会重新全量扫描。
 
 当前版本还没有 Apple Developer ID 签名和 Apple 公证，所以可能出现“无法验证开发者 / 不安全”的提示。临时解决方式是右键 App → 打开；正式解决方式是后续发布 Developer ID 签名并公证过的 DMG。
 
@@ -127,7 +127,7 @@ zsh build-app.sh
 生成 ZIP 和 DMG：
 
 ```bash
-zsh scripts/package-release.sh 0.10.0
+zsh scripts/package-release.sh 0.10.1
 ```
 
 ## Apple 公证

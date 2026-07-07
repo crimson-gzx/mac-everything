@@ -31,11 +31,11 @@ Download the latest build from GitHub Releases:
 https://github.com/crimson-gzx/mac-everything/releases
 ```
 
-Recommended: download `MacEverything-v0.10.0.dmg`, open it, then drag `MacEverything.app` to `Applications`.
+Recommended: download `MacEverything-v0.10.1.dmg`, open it, then drag `MacEverything.app` to `Applications`.
 
 If macOS blocks the app because it was downloaded from the internet, right-click the app and choose **Open**.
 
-The first launch can feel slower than later launches because macOS verifies downloaded apps and MacEverything initializes its local SQLite/FTS index. If you rebuild the index, it also needs to scan your selected folders. After indexing finishes, normal searches should be much faster.
+The first launch can feel slower than later launches because macOS verifies downloaded apps and MacEverything initializes its local SQLite/FTS index. If you rebuild the index, it also needs to scan your selected folders. After indexing finishes, later launches prefer the local SQLite cache and do not rescan the whole disk every time. A full scan only runs when the cache is missing, index/exclusion folders change, or you manually choose **Rebuild Index**.
 
 The current GitHub Release build is not yet Developer ID signed or Apple-notarized, so macOS may show an “unverified developer” or “unsafe” warning. The temporary workaround is right-click → **Open**. The proper public-distribution fix is a Developer ID signed and notarized DMG.
 
@@ -105,7 +105,7 @@ zsh build-app.sh
 Build ZIP and DMG release artifacts:
 
 ```bash
-zsh scripts/package-release.sh 0.10.0
+zsh scripts/package-release.sh 0.10.1
 ```
 
 ## Notarization

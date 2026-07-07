@@ -266,11 +266,10 @@ final class AppModel: ObservableObject {
             rebuildSearchRecords()
             indexedItemCount = stored.entries.count
             lastIndexedAt = stored.createdAt
-            updateStatus()
-            scheduleSearch(immediate: true)
+            statusText = "已从本地缓存读取 \(stored.entries.count.formatted()) 个项目"
 
-            if Date().timeIntervalSince(stored.createdAt) > 86_400 {
-                rebuildIndex()
+            if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                scheduleSearch(immediate: true)
             }
         } catch {
             rebuildIndex()

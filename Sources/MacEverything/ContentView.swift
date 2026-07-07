@@ -149,9 +149,9 @@ struct ContentView: View {
     private var resultsList: some View {
         if model.results.isEmpty {
             ContentUnavailableView {
-                Label(model.isIndexing ? "正在建立索引" : "没有找到结果", systemImage: model.isIndexing ? "externaldrive.badge.timemachine" : "doc.text.magnifyingglass")
+                Label(model.isIndexing ? "正在建立索引" : (model.query.isEmpty ? "输入关键词开始搜索" : "没有找到结果"), systemImage: model.isIndexing ? "externaldrive.badge.timemachine" : "doc.text.magnifyingglass")
             } description: {
-                Text(model.isIndexing ? "首次启动需要扫描一次文件目录。" : "试试更短的关键词，或使用 ext:pdf 等筛选条件。")
+                Text(model.isIndexing ? "只有缓存不存在、索引目录变化或手动重建时才会全量扫描。" : (model.query.isEmpty ? "启动时会优先读取本地 SQLite 缓存，不会每次打开都全盘扫描。" : "试试更短的关键词，或使用 ext:pdf 等筛选条件。"))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {

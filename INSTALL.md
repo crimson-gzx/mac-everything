@@ -1,6 +1,6 @@
 # MacEverything Installation
 
-Recommended download: `MacEverything-v0.10.0.dmg`.
+Recommended download: `MacEverything-v0.10.1.dmg`.
 
 ## Quick install
 
@@ -17,7 +17,7 @@ This is expected for the current build. The first launch can be slower than late
 2. MacEverything initializes its local SQLite / FTS index files.
 3. If you click **Rebuild Index**, it needs to scan your selected index folders. Larger folders take longer.
 
-After the first index is built, normal searches should be much faster. The bottom status bar shows search time, FTS/memory mode, candidate count, and index duration.
+After the first index is built, later launches prefer the local SQLite cache and do not rescan the whole disk every time. A full scan only runs when the cache is missing, index/exclusion folders change, or you manually choose **Rebuild Index**. The bottom status bar shows search time, FTS/memory mode, candidate count, and index duration.
 
 ## Why does macOS say the app is unsafe?
 
