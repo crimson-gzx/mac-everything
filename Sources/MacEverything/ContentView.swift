@@ -67,6 +67,7 @@ struct ContentView: View {
                 Button("索引目录设置…") { showingIndexSettings = true }
                 Button("重建索引") { model.rebuildIndex() }
                 Button("打开完全磁盘访问设置") { model.openFullDiskAccessSettings() }
+                Button("检查更新") { model.openLatestReleasePage() }
                 Divider()
                 Menu("过滤器") {
                     Button("保存当前搜索为过滤器…") { model.saveCurrentQueryAsFilter() }
@@ -151,7 +152,7 @@ struct ContentView: View {
             ContentUnavailableView {
                 Label(model.isIndexing ? "正在建立索引" : (model.query.isEmpty ? "输入关键词开始搜索" : "没有找到结果"), systemImage: model.isIndexing ? "externaldrive.badge.timemachine" : "doc.text.magnifyingglass")
             } description: {
-                Text(model.isIndexing ? "只有缓存不存在、索引目录变化或手动重建时才会全量扫描。" : (model.query.isEmpty ? "启动时会优先读取本地 SQLite 缓存，不会每次打开都全盘扫描。" : "试试更短的关键词，或使用 ext:pdf 等筛选条件。"))
+                Text(model.isIndexing ? "第一次打开需要加载索引，可能会有点慢。后面会优先读取本地缓存，就会快很多。" : (model.query.isEmpty ? "第一次打开需要加载索引，可能会有点慢。后面会优先读取本地缓存，就会快很多。" : "试试更短的关键词，或使用 ext:pdf 等筛选条件。"))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {

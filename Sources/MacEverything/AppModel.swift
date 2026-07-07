@@ -75,8 +75,11 @@ final class AppModel: ObservableObject {
             let scanExcludedPaths = excludedPaths
             let indexStart = Date()
 
-            let entries = await Task.detached(priority: .userInitiated) {
-                FileIndexer.scan(roots: scanRoots, excludedPaths: scanExcludedPaths)
+            let payload = await Task.detached(priority: .userInitiated) {
+                let entries = FileIndexer.scan(roots: scanRoots, excludedPaths: scanExcludedPaths)
+                let map = Dictionary(uniqueKeysWithValues: entries.map { ($0.path, $0) })
+                let records = SearchEngine.makeRecords(from: entries)
+                return (entries, map, records)
             }.value
 
             guard !Task.isCancelled else {
@@ -85,9 +88,9 @@ final class AppModel: ObservableObject {
                 return
             }
 
-            entryMap = Dictionary(uniqueKeysWithValues: entries.map { ($0.path, $0) })
-            rebuildSearchRecords()
-            indexedItemCount = entries.count
+            entryMap = payload.1
+            searchRecords = payload.2
+            indexedItemCount = payload.0.count
             lastIndexedAt = Date()
             lastIndexDurationMS = Date().timeIntervalSince(indexStart) * 1_000
             isIndexing = false
@@ -132,6 +135,12 @@ final class AppModel: ObservableObject {
 
     func openFullDiskAccessSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func openLatestReleasePage() {
+        let releaseURL = "https://" + "github.com/crimson-gzx/mac-everything/releases/latest"
+        guard let url = URL(string: releaseURL) else { return }
         NSWorkspace.shared.open(url)
     }
 
@@ -262,9 +271,15 @@ final class AppModel: ObservableObject {
                 return
             }
 
-            entryMap = Dictionary(uniqueKeysWithValues: stored.entries.map { ($0.path, $0) })
-            rebuildSearchRecords()
-            indexedItemCount = stored.entries.count
+            let prepared = await Task.detached(priority: .userInitiated) {
+                let entries = stored.entries
+                let map = Dictionary(uniqueKeysWithValues: entries.map { ($0.path, $0) })
+                let records = SearchEngine.makeRecords(from: entries)
+                return (map, records, entries.count)
+            }.value
+            entryMap = prepared.0
+            searchRecords = prepared.1
+            indexedItemCount = prepared.2
             lastIndexedAt = stored.createdAt
             statusText = "已从本地缓存读取 \(stored.entries.count.formatted()) 个项目"
 
@@ -336,17 +351,33 @@ final class AppModel: ObservableObject {
                     databaseUpserts.append(entry)
                     changed = true
                 }
-            } else if entryMap[path] != nil || entryMap.keys.contains(where: { $0.hasPrefix(path + "/") }) {
-                entryMap = entryMap.filter { key, _ in
-                    key != path && !key.hasPrefix(path + "/")
-                }
+            } else {
                 databaseRemovals.append(path)
+            }
+        }
+
+        if !databaseRemovals.isEmpty {
+            let currentMap = entryMap
+            let removals = databaseRemovals
+            let filteredMap = await Task.detached(priority: .utility) {
+                let exact = Set(removals)
+                let prefixes = removals.map { $0 + "/" }
+                return currentMap.filter { key, _ in
+                    if exact.contains(key) { return false }
+                    return !prefixes.contains { key.hasPrefix($0) }
+                }
+            }.value
+            if filteredMap.count != entryMap.count {
+                entryMap = filteredMap
                 changed = true
             }
         }
 
         guard changed else { return }
-        rebuildSearchRecords()
+        let entriesForRecords = Array(entryMap.values)
+        searchRecords = await Task.detached(priority: .utility) {
+            SearchEngine.makeRecords(from: entriesForRecords)
+        }.value
         indexedItemCount = entryMap.count
         updateStatus()
         scheduleSearch(immediate: true)

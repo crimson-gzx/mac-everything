@@ -32,6 +32,9 @@ struct MacEverythingApp: App {
             Button("完全磁盘访问设置") {
                 model.openFullDiskAccessSettings()
             }
+            Button("检查更新") {
+                model.openLatestReleasePage()
+            }
 
             Divider()
 
@@ -131,6 +134,12 @@ struct MacEverythingCommands: Commands {
 
             Button("完全磁盘访问设置") {
                 model.openFullDiskAccessSettings()
+            }
+
+            Divider()
+
+            Button("检查更新") {
+                model.openLatestReleasePage()
             }
         }
     }
